@@ -13,13 +13,10 @@
 
 using namespace Gdiplus;
 
-
 #define SHOWTIMER_INTERVAL 40
 
 CTimer showTimer;
 CTimer appTimer;
-
-WCHAR iniFile[MAX_PATH];
 
 #define MAXCHARS 4096
 WCHAR textBuffer[MAXCHARS];
@@ -126,7 +123,7 @@ void updateLabel()
     if(keyLabel.length > 0) 
     {
         RectF &rc = keyLabel.rect;
-        REAL r = 1.0f*keyLabel.time/labelSettings.fadeDuration;
+        REAL r = 1.0f * keyLabel.time / labelSettings.fadeDuration;
         r = (r > 1.0f) ? 1.0f : r;
         PointF origin(rc.X, rc.Y);
         gCanvas->MeasureString(keyLabel.text, keyLabel.length, fontPlus, origin, &rc);
@@ -148,14 +145,12 @@ void updateLabel()
     }
 }
 
-
-
 static void close()
 {
     PostMessage(hMainWnd, WM_CLOSE, 0, 0);
 }
 
-static void startFade() 
+static void fadeUpdate() 
 {
     DWORD i = 0;
     BOOL dirty = FALSE;
@@ -290,12 +285,13 @@ void GetWorkAreaByOrigin(const POINT &pt, MONITORINFO &mi)
     GetMonitorInfo(hMonitor, &mi);
 }
 
-void fixDeskOrigin() 
+void FixDeskOrigin() 
 {
     if(deskOrigin.x > desktopRect.right || deskOrigin.x < desktopRect.left + labelSettings.borderSize) 
     {
         deskOrigin.x = desktopRect.right - labelSettings.borderSize;
     }
+
     if(deskOrigin.y > desktopRect.bottom || deskOrigin.y < desktopRect.top + labelSettings.borderSize) 
     {
         deskOrigin.y = desktopRect.bottom;
@@ -304,37 +300,38 @@ void fixDeskOrigin()
 
 void LoadSettings() 
 {
-    labelSettings.lingerTime = GetPrivateProfileInt(L"KeyCastOW", L"lingerTime", 1200, iniFile);
-    labelSettings.fadeDuration = GetPrivateProfileInt(L"KeyCastOW", L"fadeDuration", 310, iniFile);
-    labelSettings.bgColor = GetPrivateProfileInt(L"KeyCastOW", L"bgColor", RGB(75, 75, 75), iniFile);
-    labelSettings.textColor = GetPrivateProfileInt(L"KeyCastOW", L"textColor", RGB(255, 255, 255), iniFile);
-    labelSettings.bgOpacity = GetPrivateProfileInt(L"KeyCastOW", L"bgOpacity", 200, iniFile);
-    labelSettings.textOpacity = GetPrivateProfileInt(L"KeyCastOW", L"textOpacity", 255, iniFile);
-    labelSettings.borderOpacity = GetPrivateProfileInt(L"KeyCastOW", L"borderOpacity", 200, iniFile);
-    labelSettings.borderColor = GetPrivateProfileInt(L"KeyCastOW", L"borderColor", RGB(0, 128, 255), iniFile);
-    labelSettings.borderSize = GetPrivateProfileInt(L"KeyCastOW", L"borderSize", 8, iniFile);
-    labelSettings.cornerSize = GetPrivateProfileInt(L"KeyCastOW", L"cornerSize", 2, iniFile);
+    labelSettings.lingerTime    = 1200;
+    labelSettings.fadeDuration  = 310;
+    labelSettings.bgColor       = RGB(75, 75, 75);
+    labelSettings.textColor     = RGB(255, 255, 255);
+    labelSettings.bgOpacity     = 200;
+    labelSettings.textOpacity   = 255;
+    labelSettings.borderOpacity = 200;
+    labelSettings.borderColor   = RGB(0, 128, 255);
+    labelSettings.borderSize    = 8;
+    labelSettings.cornerSize    = 2;
 
-    deskOrigin.x = GetPrivateProfileInt(L"KeyCastOW", L"offsetX", 2, iniFile);
-    deskOrigin.y = GetPrivateProfileInt(L"KeyCastOW", L"offsetY", 2, iniFile);
+    deskOrigin.x = 2;
+    deskOrigin.y = 2;
 
     MONITORINFO mi;
     GetWorkAreaByOrigin(deskOrigin, mi);
     CopyMemory(&desktopRect, &mi.rcWork, sizeof(RECT));
     MoveWindow(hMainWnd, desktopRect.left, desktopRect.top, 1, 1, TRUE);
 
-    fixDeskOrigin();
+    FixDeskOrigin();
 
     memset(&labelSettings.font, 0, sizeof(labelSettings.font));
-    labelSettings.font.lfCharSet = DEFAULT_CHARSET;
-    labelSettings.font.lfHeight = -37;
+
+    labelSettings.font.lfCharSet        = DEFAULT_CHARSET;
+    labelSettings.font.lfHeight         = -37;
     labelSettings.font.lfPitchAndFamily = DEFAULT_PITCH;
-    labelSettings.font.lfWeight  = FW_BLACK;
-    labelSettings.font.lfOutPrecision = OUT_DEFAULT_PRECIS;
-    labelSettings.font.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    labelSettings.font.lfQuality = ANTIALIASED_QUALITY;
+    labelSettings.font.lfWeight         = FW_BLACK;
+    labelSettings.font.lfOutPrecision   = OUT_DEFAULT_PRECIS;
+    labelSettings.font.lfClipPrecision  = CLIP_DEFAULT_PRECIS;
+    labelSettings.font.lfQuality        = ANTIALIASED_QUALITY;
+
     wcscpy_s(labelSettings.font.lfFaceName, LF_FACESIZE, TEXT("Arial Black"));
-    GetPrivateProfileStruct(L"KeyCastOW", L"labelFont", &labelSettings.font, sizeof(labelSettings.font), iniFile);
 }
 
 LRESULT CALLBACK WindowFunc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -382,10 +379,6 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
         |ICC_UPDOWN_CLASS|ICC_USEREX_CLASSES|ICC_WIN95_CLASSES;
     InitCommonControlsEx(&icex);
 
-    GetModuleFileName(NULL, iniFile, MAX_PATH);
-    iniFile[wcslen(iniFile)-4] = '\0';
-    wcscat_s(iniFile, MAX_PATH, L".ini");
-
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR           gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
@@ -415,6 +408,10 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
         return 0;
     }
 
+    LPWSTR *szArgList;
+    int argCount;
+    szArgList = CommandLineToArgvW(GetCommandLine(), &argCount);
+
     LoadSettings();
 
     UpdateCanvasSize(deskOrigin);
@@ -427,13 +424,19 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
 
     ShowWindow(hMainWnd, SW_SHOW);
 
-    showTimer.OnTimedEvent = startFade;
+    showTimer.OnTimedEvent = fadeUpdate;
     showTimer.Start(SHOWTIMER_INTERVAL);
 
-    appTimer.OnTimedEvent = close;
-    appTimer.Start(2000, false, true);
-
-    showText(L"Open Zoser Projects");
+    if (argCount > 1)
+    {
+        appTimer.OnTimedEvent = close;
+        appTimer.Start(2000, false, true);
+        showText(szArgList[1]);
+    }
+    else
+    {
+        close();
+    }
 
     while( GetMessage(&msg, NULL, 0, 0) )    
     {
