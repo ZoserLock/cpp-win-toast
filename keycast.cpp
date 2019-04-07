@@ -8,7 +8,6 @@
 
 #include <gdiplus.h>
 
-#include "resource.h"
 #include "timer.h"
 
 using namespace Gdiplus;
@@ -448,5 +447,5 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
     delete fontPlus;
 
     GdiplusShutdown(gdiplusToken);
-    return msg.wParam;
+    return 0;
 }
